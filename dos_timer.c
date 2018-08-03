@@ -10,11 +10,11 @@
 ##########    ACO algorithms for the TSP    ##########
 ######################################################
 
-      Version: 1.0
+      Version: 1.03
       File:    dos_timer.c
       Author:  Thomas Stuetzle
       Purpose: routines for measuring elapsed time (CPU or real)
-      Check:   README.txt and legal.txt
+      Check:   README and LICENSE
       Copyright (C) 2004  Thomas Stuetzle
 */
 

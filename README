@@ -23,7 +23,7 @@ with the Book
 Optimization", MIT Press, Cambridge, MA, USA, 2004.
 
 The software package is freely available subject to the 
-GNU General Public Licence, which is included in file gpl.txt.
+GNU General Public Licence, which is included in the LICENSE file.
 
 If you use ACOTSP in your research, I would appreciate a citation in
 your publication(s). Please cite it as
@@ -111,7 +111,7 @@ CONTENTS
 
 
 The GNU General Public Licence:
-gpl.txt
+LICENSE
 
 The main control routines, main:
 acotsp.c
