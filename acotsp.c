@@ -597,14 +597,13 @@ int main(int argc, char *argv[]) {
 
 	init_try(n_try);
 
-    if (!at_least_1_as_active ) {
-	    printf("Gen nn_tour\n");
+        if (!at_least_1_as_active ) {
 	    for ( i = 0 ; i < n_ants ; i++ )
-		nn_tour(&ant[i], FALSE);
-	    printf("Do local_search\n");
+                nn_tour(&ant[i], FALSE);
+		
 	    if ( ls_flag > 0 )
-		local_search();
-	    printf("Do update_statistics\n");
+                local_search();
+		
 	    update_statistics();
 	}
 	else {
