@@ -10,13 +10,17 @@
 ##########    ACO algorithms for the TSP    ##########
 ######################################################
 
-      Version: 1.0
-      File:    main.c
+      Version: 1.03-ls
+      File:    acotsp.c
       Author:  Thomas Stuetzle
+               Local search only option added by Jussi Rasku
       Purpose: main routines and control for the ACO algorithms
+               Can also be used as a 2-opt/2.5-opt/3-opt 
+               solver for TSPs
       Check:   README and gpl.txt
       Copyright (C) 2002  Thomas Stuetzle
 */
+
 
 /***************************************************************************
 
@@ -179,8 +183,11 @@ void init_try( long int ntry )
 	init_pheromone_trails( trail_0 );
     }
   
-    /* Calculate combined information pheromone times heuristic information */
-    compute_total_information();
+    if (as_flag || eas_flag || ras_flag || bwas_flag || mmas_flag || acs_flag) {
+	/* Calculate combined information pheromone times heuristic information */
+	compute_total_information();
+    }
+    
     
     if (comp_report) fprintf(comp_report,"begin try %li \n",ntry);
     if (stat_report) fprintf(stat_report,"begin try %li \n",ntry);
@@ -254,8 +261,12 @@ void update_statistics( void )
 
 	found_best = iteration;
 	restart_found_best = iteration;
-	found_branching = node_branching(lambda);
-	branching_factor = found_branching;
+	if (as_flag || eas_flag || ras_flag || mmas_flag || bwas_flag || acs_flag)
+	{
+	    found_branching = node_branching(lambda);
+	    branching_factor = found_branching;
+	}
+    
 	if ( mmas_flag ) {
 	    if ( !ls_flag ) {
 		p_x = exp(log(0.05)/n); 
@@ -482,7 +493,10 @@ void acs_global_update( void )
 {
     TRACE ( printf("Ant colony System global pheromone deposit\n"); );
 
-    global_acs_pheromone_update( best_so_far_ant );
+    if ( as_flag || eas_flag || ras_flag || mmas_flag || bwas_flag || mmas_flag )
+    {
+	global_acs_pheromone_update( best_so_far_ant );
+    }
 }
 
 
@@ -561,14 +575,20 @@ int main(int argc, char *argv[]) {
 */
 
     long int i;
+    long int at_least_1_as_active;
 
     start_timers();
 
     init_program(argc, argv);
+    at_least_1_as_active = (as_flag || eas_flag || ras_flag ||
+                            mmas_flag || bwas_flag || acs_flag);
 
     instance.nn_list = compute_nn_lists();
-    pheromone = generate_double_matrix( n, n );
-    total = generate_double_matrix( n, n );
+
+	if (at_least_1_as_active) {
+        pheromone = generate_double_matrix( n, n );
+        total = generate_double_matrix( n, n );
+    }
 
     time_used = elapsed_time( VIRTUAL );
     printf("Initialization took %.10f seconds\n",time_used);
@@ -577,20 +597,32 @@ int main(int argc, char *argv[]) {
 
 	init_try(n_try);
 
-	while ( !termination_condition() ) {
-
-	    construct_solutions();
-
+    if (!at_least_1_as_active ) {
+	    printf("Gen nn_tour\n");
+	    for ( i = 0 ; i < n_ants ; i++ )
+		nn_tour(&ant[i], FALSE);
+	    printf("Do local_search\n");
 	    if ( ls_flag > 0 )
 		local_search();
-
+	    printf("Do update_statistics\n");
 	    update_statistics();
+	}
+	else {
+		while ( !termination_condition() ) {
 
-	    pheromone_trail_update();  
+		    construct_solutions();
 
-	    search_control_and_statistics();
+		    if ( ls_flag > 0 )
+			    local_search();
 
-	    iteration++;
+		    update_statistics();
+
+		    pheromone_trail_update();
+
+		    search_control_and_statistics();
+
+		    iteration++;
+	    }
 	}
 	exit_try(n_try);
     }
@@ -598,8 +630,10 @@ int main(int argc, char *argv[]) {
 
     free( instance.distance );
     free( instance.nn_list );
-    free( pheromone );
-    free( total );
+    if (at_least_1_as_active) {
+        free( pheromone );
+        free( total );
+    }
     free( best_in_try );
     free( best_found_at );
     free( time_best_found );
