@@ -283,13 +283,13 @@ int tsp_check_tour(const long int *t)
     used = calloc (size, sizeof(int));
 
     if (t == NULL) {
-        fprintf (stderr,"\n%s:error: permutation is not initialized!", __FUNCTION__);
+        fprintf (stderr,"\n%s:error: permutation is not initialized!", __extension__ __FUNCTION__);
         exit(1);
     }
 
     for (i = 0; i < size; i++) {
         if (used[t[i]]) {
-            fprintf(stderr,"\n%s:error: solution vector has two times the value %ld (last position: %d)", __FUNCTION__, t[i], i);
+            fprintf(stderr,"\n%s:error: solution vector has two times the value %ld (last position: %d)", __extension__ __FUNCTION__, t[i], i);
             goto error;
         }
         else
@@ -298,20 +298,20 @@ int tsp_check_tour(const long int *t)
 
     for (i = 0; i < size; i++) {
         if (!used[i]) {
-            fprintf(stderr,"\n%s:error: vector position %d not occupied", __FUNCTION__, i);
+            fprintf(stderr,"\n%s:error: vector position %d not occupied", __extension__ __FUNCTION__, i);
             goto error;
         }
     }
 
     if (t[0] != t[size]) {
-        fprintf(stderr,"\n%s:error: permutation is not a closed tour.", __FUNCTION__);
+        fprintf(stderr,"\n%s:error: permutation is not a closed tour.", __extension__ __FUNCTION__);
         goto error;
     }
     free (used);
     return TRUE;
 
 error:
-    fprintf(stderr,"\n%s:error: solution_vector:", __FUNCTION__);
+    fprintf(stderr,"\n%s:error: solution_vector:", __extension__ __FUNCTION__);
     for (i = 0; i < size; i++)
         fprintf(stderr, " %ld", t[i]);
     fprintf(stderr,"\n");
