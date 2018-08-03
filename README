@@ -49,27 +49,31 @@ reasonably efficient implementation of these ACO algorithms while at
 the same time aiming for readability and understandability of the
 code.
 
-
-As the code includes one of the most portable open source 
-implementations of 3-opt local search, the 1.03-ls version 
-of this software allows using only local search part of the tool.
-That is, with the modifications in 1.03-ls it can be used as a 
-stand-alone local search solver that brings nearest neighbour 
-initial TSP solutions to 2 or 3-optimality.
+Additionally, as the code includes one of the most portable open
+source implementations of 3-opt local search, the 1.03-ls version of
+this software allows using only local search part of the tool. That
+is, with the modifications in 1.03-ls it can be used as a stand-alone
+local search solver that brings nearest neighbour initial TSP
+solutions to 2 or 3-optimality.
 
 
 UPDATES for version 1.03-ls: (Jussi Rasku)
-- Added -j / --lsrnd flag that can be used to disable the randomization
-  of local search order
+
+- Added -j / --lsrnd flag that can be used to turn the randomization
+  of local search order off
+  
 - Added -n / --noants option for turning all ant systems off
+
 - Fixed most of the warnings with the GCC 7.2.0 compiler
-- Support for TSPLIB instances with EXPLICIT UPPER_ROW and
-  LOWER_COL weights
+
+- Support for TSPLIB instances with EXPLICIT UPPER_ROW and LOWER_COL
+  weights
+  
 - Autodetect the plafrorm for timer selection in the Makefile
-- Nearest neighbor tours can be generated for any ant 
-  (used in local search mode)
-- acotsp can be called with "-m 1 -r 1 -s 1 -n -j 0" options to produce deterministically 3-optimal route
-  without using ants nor pheromone trails
+
+- Nearest neighbor tours can be generated for any ant  (used in the 
+  local search only -mode)
+  
 - print the full solution to stdout in --quiet mode
 
 
@@ -316,9 +320,9 @@ or
 ./acotsp --tsplibfile lin318.tsp --acs --rho 0.1 --q0 0.95 --time 60. --optimum 42029 --ants 10
 
 
-the version 1.03-ls allows running the executable without ants and only
-with deterministic (-j 0) local search. This means no pheromones, no 
-evaporation, no ants. Just nearest neighbor initial solution and (a
+The version 1.03-ls allows running the executable without ants (-n) and 
+only with deterministic (-j 0) local search. This means no pheromones, no 
+evaporation, no ants - just nearest neighbor initial solution and (a
 very fast) 2-opt/3-opt local search: 
 
 ./acotsp -i lin318.tsp -n -r 1 -s 1 -m 1 -j 0
