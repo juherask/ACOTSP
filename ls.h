@@ -56,6 +56,7 @@ extern long int nn_ls;
 
 extern long int dlb_flag; 
 
+extern long int lsrnd_flag; 
 void two_opt_first( long int *tour );
 
 void two_h_opt_first( long int *tour );

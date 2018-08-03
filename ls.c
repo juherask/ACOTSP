@@ -10,9 +10,10 @@
 ##########    ACO algorithms for the TSP    ##########
 ######################################################
 
-      Version: 1.0
+      Version: 1.03-ls
       File:    ls.c
       Author:  Thomas Stuetzle
+               Local search only option added by Jussi Rasku
       Purpose: implementation of local search routines
       Check:   README and gpl.txt
       Copyright (C) 1999  Thomas Stuetzle
@@ -64,17 +65,20 @@
 long int ls_flag;          /* indicates whether and which local search is used */ 
 long int nn_ls;            /* maximal depth of nearest neighbour lists used in the 
 			      local search */ 
-long int dlb_flag = TRUE;  /* flag indicating whether don't look bits are used. I recommend 
-			      to always use it if local search is applied */
+long int dlb_flag = TRUE;  /* flag indicating whether don't look bits are used, 
+                              recommended to use if local search is applied */
+long int lsrnd_flag = TRUE;/* flag used to turn on the random permutation before
+                              local search, recommended to use */
 
-long int * generate_random_permutation( long int n )
+long int * generate_permutation( long int n )
 /*    
-      FUNCTION:       generate a random permutation of the integers 0 .. n-1
+      FUNCTION:       generate a permutation of the integers 0 .. n-1
       INPUT:          length of the array
-      OUTPUT:         pointer to the random permutation
-      (SIDE)EFFECTS:  the array holding the random permutation is allocated in this 
+      OUTPUT:         pointer to the permutation
+      (SIDE)EFFECTS:  the array holding the permutation is allocated in this 
                       function. Don't forget to free again the memory!
-      COMMENTS:       only needed by the local search procedures
+      COMMENTS:       only needed by the local search procedures, if lsrnd_flag
+                      is set (TRUE by default), the permutation is random
 */
 {
    long int  i, help, node, tot_assigned = 0;
@@ -86,15 +90,17 @@ long int * generate_random_permutation( long int n )
    for ( i = 0 ; i < n; i++) 
      r[i] = i;
 
-   for ( i = 0 ; i < n ; i++ ) {
-     /* find (randomly) an index for a free unit */ 
-     rnd  = ran01 ( &seed );
-     node = (long int) (rnd  * (n - tot_assigned)); 
-     assert( i + node < n );
-     help = r[i];
-     r[i] = r[i+node];
-     r[i+node] = help;
-     tot_assigned++;
+   if (lsrnd_flag) {
+	   for ( i = 0 ; i < n ; i++ ) {
+	     /* find (randomly) an index for a free unit */ 
+	     rnd  = ran01 ( &seed );
+	     node = (long int) (rnd  * (n - tot_assigned)); 
+	     assert( i + node < n );
+	     help = r[i];
+	     r[i] = r[i+node];
+	     r[i+node] = help;
+	     tot_assigned++;
+	   }
    }
    return r;
 }
@@ -123,7 +129,7 @@ void two_opt_first( long int *tour )
     long int h1=0, h2=0, h3=0, h4=0;
     long int radius;             /* radius of nn-search */
     long int gain = 0;
-    long int *random_vector;
+    long int *permutation_vector;
     long int *pos;               /* positions of cities in tour */ 
     long int *dlb;               /* vector containing don't look bits */ 
   
@@ -135,7 +141,7 @@ void two_opt_first( long int *tour )
     }
 
     improvement_flag = TRUE;
-    random_vector = generate_random_permutation( n );
+    permutation_vector = generate_permutation( n );
 
     while ( improvement_flag ) {
 
@@ -143,7 +149,7 @@ void two_opt_first( long int *tour )
 
 	for (l = 0 ; l < n; l++) {
 
-	    c1 = random_vector[l]; 
+	    c1 = permutation_vector[l]; 
 	    DEBUG ( assert ( c1 < n && c1 >= 0); )
 		if ( dlb_flag && dlb[c1] )
 		    continue;
@@ -249,7 +255,7 @@ void two_opt_first( long int *tour )
 	    n_improves++;
 	}
     }
-    free( random_vector );
+    free( permutation_vector );
     free( dlb );
     free( pos );
 }
@@ -282,7 +288,7 @@ void two_h_opt_first( long int *tour )
     long int h1=0, h2=0, h3=0, h4=0, h5=0, help;
     long int radius;             /* radius of nn-search */
     long int gain = 0;
-    long int *random_vector;
+    long int *permutation_vector;
     long int two_move, node_move;
 
     long int *pos;               /* positions of cities in tour */ 
@@ -296,7 +302,7 @@ void two_h_opt_first( long int *tour )
     }
 
     improvement_flag = TRUE;
-    random_vector = generate_random_permutation( n );
+    permutation_vector = generate_permutation( n );
 
     while ( improvement_flag ) {
 
@@ -304,7 +310,7 @@ void two_h_opt_first( long int *tour )
 
 	for (l = 0 ; l < n; l++) {
 
-	    c1 = random_vector[l]; 
+	    c1 = permutation_vector[l]; 
 	    DEBUG ( assert ( c1 < n && c1 >= 0); )
 		if ( dlb_flag && dlb[c1] )
 		    continue;
@@ -483,7 +489,7 @@ void two_h_opt_first( long int *tour )
       
 	}
     }
-    free( random_vector );
+    free( permutation_vector );
     free( dlb );
     free( pos );
 }
@@ -507,7 +513,7 @@ void three_opt_first( long int *tour )
 		      Holger H. Hoos and Thomas Stuetzle, 
 		      Stochastic Local Search---Foundations and Applications, 
 		      Morgan Kaufmann Publishers, 2004.
-		      or some of the papers available online from David S. Johnson.
+		      or some of the papers online available from David S. Johnson.
 */
 {
     /* In case a 2-opt move should be performed, we only need to store opt2_move = TRUE,
@@ -538,7 +544,7 @@ void three_opt_first( long int *tour )
     long int *dlb;               /* vector containing don't look bits */ 
     long int *h_tour;            /* help vector for performing exchange move */ 
     long int *hh_tour;           /* help vector for performing exchange move */ 
-    long int *random_vector;
+    long int *permutation_vector;
 
     pos = malloc(n * sizeof(long int));
     dlb = malloc(n * sizeof(long int));
@@ -550,7 +556,7 @@ void three_opt_first( long int *tour )
 	dlb[i] = FALSE;
     }
     improvement_flag = TRUE;
-    random_vector = generate_random_permutation( n );
+    permutation_vector = generate_permutation( n );
 
     while ( improvement_flag ) {
 	move_value = 0;
@@ -558,7 +564,7 @@ void three_opt_first( long int *tour )
 
 	for ( l = 0 ; l < n ; l++ ) {
 
-	    c1 = random_vector[l];
+	    c1 = permutation_vector[l];
 	    if ( dlb_flag && dlb[c1] )
 		continue;
 	    opt2_flag = FALSE;
@@ -1521,7 +1527,7 @@ void three_opt_first( long int *tour )
 	    }
 	}
     }
-    free( random_vector );
+    free( permutation_vector );
     free( h_tour );
     free( hh_tour );
     free( pos );
