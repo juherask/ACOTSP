@@ -625,7 +625,7 @@ double node_branching(double l)
 
 void output_solution( void ) 
 /*    
-      FUNCTION:       output a solution together with node coordinates
+      FUNCTION:       output a solution
       INPUT:          none
       OUTPUT:         none
       COMMENTS:       not used in the default implementation but may be useful anyway
@@ -641,6 +641,14 @@ void output_solution( void )
                     instance.nodeptr[best_so_far_ant->tour[i]].y);
         }
         fprintf(stat_report, "\n"); 
+    }
+    else
+    {
+	    printf("best solution so far is"); 
+	    for ( i = 0 ; i < n ; i++ ) {
+		printf(" %ld", (best_so_far_ant->tour[i]));
+	    }
+	    printf("\n\n"); 
     }
 }
 
@@ -673,7 +681,7 @@ void exit_try( long int ntry )
 
   if (comp_report) fprintf(comp_report,"end try %ld\n\n",ntry);
   if (stat_report) fprintf(stat_report,"end try %ld\n\n",ntry);
-  TRACE (output_solution();)
+  output_solution();
   if (report) fflush(report); 
   if (comp_report) fflush(comp_report); 
   if (stat_report) fflush(stat_report); 
