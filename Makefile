@@ -2,12 +2,25 @@
 VERSION=1.03
 
 OPTIM_FLAGS=-O
-WARN_FLAGS=-Wall -ansi -pedantic
+WARN_FLAGS=-Wall -ansi -pedantic -Wno-overlength-strings
 CFLAGS=$(WARN_FLAGS) $(OPTIM_FLAGS)
-# To change the default timer implementation, uncomment the line below
-# or call 'make TIMER=unix'
-TIMER=dos
+
+# You can use this autodetection of the platform ...
+ifeq ($(OS),Windows_NT)
+    detected_OS=Windows
+else
+    detected_OS=$(shell uname -s)
+endif
+ifeq ($(detected_OS),Windows)
+    TIMER=dos
+else
+    TIMER=unix
+endif
+# ... or force the timer implementation by uncommenting uncomment the line below ...
+#TIMER=dos
 #TIMER=unix
+# ... or call 'make TIMER=unix'
+
 LDLIBS=-lm
 
 acotsp: acotsp.o TSP.o utilities.o ants.o InOut.o $(TIMER)_timer.o ls.o parse.o
