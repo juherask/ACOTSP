@@ -265,7 +265,7 @@ void read_etsp(const char *tsp_file_name)
 	    fscanf(tsp_file, "%s", buf);
 	    TRACE ( printf("%s\n", buf); )
 	    if( strcmp("UPPER_ROW", buf)!=0 && strcmp("LOWER_COL", buf)!=0 ) {
-		fprintf(stderr,"\n only UPPER_ROW and LOWER_COLEDGE_WEIGHT_FORMAT are supported !!\n");
+		fprintf(stderr,"\n only UPPER_ROW and LOWER_COL EDGE_WEIGHT_FORMAT are supported !!\n");
 		exit(1);
 	    }
 	    buf[0]=0;
