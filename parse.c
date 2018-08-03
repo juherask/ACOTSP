@@ -87,6 +87,11 @@
 #define STR_HELP_DLB \
   "  -d, --dlb            1 use don't look bits in local search\n"
 
+#define STR_HELP_LSRND \
+  "  -j, --lsrnd          1 use randomized permutation order in local search\n"
+
+#define STR_HELP_NOANTS \
+  "  -n, --noants          disable all ant systems\n"
 #define STR_HELP_AS \
   "  -u, --as              apply basic Ant System\n"
 
@@ -129,6 +134,8 @@ static const char *const STR_HELP[] = {
   STR_HELP_NNLS ,
   STR_HELP_LOCALSEARCH ,
   STR_HELP_DLB ,
+  STR_HELP_LSRND ,
+  STR_HELP_NOANTS ,
   STR_HELP_AS ,
   STR_HELP_EAS ,
   STR_HELP_RAS ,
@@ -192,6 +199,12 @@ unsigned int opt_localsearch : 1;
 
 /* Set to 1 if option --dlb (-d) has been specified.  */
 unsigned int opt_dlb : 1;
+
+/* Set to 1 if option --lsrnd (-j) has been specified.  */
+unsigned int opt_lsrnd : 1;
+
+/* Set to 1 if option --noants (-n) has been specified.  */
+unsigned int opt_noants : 1;
 
 /* Set to 1 if option --as (-u) has been specified.  */
 unsigned int opt_as : 1;
@@ -268,6 +281,8 @@ const char *arg_localsearch;
 /* Argument to option --dlb (-d).  */
 const char *arg_dlb;
 
+/* Argument to option --lsrnd (-j).  */
+const char *arg_lsrnd;
 };
 
 /* Parse command line options.  Return index of first non-option argument,
@@ -293,6 +308,8 @@ parse_options (struct options *const options, const char *const program_name,
   static const char *const optstr__nnls = "nnls";
   static const char *const optstr__localsearch = "localsearch";
   static const char *const optstr__dlb = "dlb";
+  static const char *const optstr__lsrnd = "lsrnd";
+  static const char *const optstr__noants = "noants";
   static const char *const optstr__as = "as";
   static const char *const optstr__eas = "eas";
   static const char *const optstr__ras = "ras";
@@ -319,6 +336,8 @@ parse_options (struct options *const options, const char *const program_name,
   options->opt_nnls = 0;
   options->opt_localsearch = 0;
   options->opt_dlb = 0;
+  options->opt_lsrnd = 0;
+  options->opt_noants = 0;
   options->opt_as = 0;
   options->opt_eas = 0;
   options->opt_ras = 0;
@@ -344,6 +363,7 @@ parse_options (struct options *const options, const char *const program_name,
   options->arg_nnls = 0;
   options->arg_localsearch = 0;
   options->arg_dlb = 0;
+  options->arg_lsrnd = 0;
   while (++i < argc)
   {
     const char *option = argv [i];
@@ -527,6 +547,20 @@ parse_options (struct options *const options, const char *const program_name,
           options->opt_localsearch = 1;
           break;
         }
+        if (strncmp (option + 1, optstr__lsrnd + 1, option_len - 1) == 0)
+        {
+          if (argument != 0)
+            options->arg_lsrnd = argument;
+          else if (++i < argc)
+            options->arg_lsrnd = argv [i];
+          else
+          {
+            option = optstr__lsrnd;
+            goto error_missing_arg_long;
+          }
+          options->opt_lsrnd = 1;
+          break;
+        }
         goto error_unknown_long_opt;
        case 'm':
         if (strncmp (option + 1, optstr__mmas + 1, option_len - 1) == 0)
@@ -571,6 +605,18 @@ parse_options (struct options *const options, const char *const program_name,
             goto error_missing_arg_long;
           }
           options->opt_nnls = 1;
+          break;
+        }
+        else if (strncmp (option + 1, optstr__noants + 1, option_len - 1) == 0)
+        {
+          if (option_len <= 1)
+            goto error_long_opt_ambiguous;
+          if (argument != 0)
+          {
+            option = optstr__noants;
+            goto error_unexpec_arg_long;
+          }
+          options->opt_noants = 1;
           break;
         }
         goto error_unknown_long_opt;
@@ -848,6 +894,16 @@ parse_options (struct options *const options, const char *const program_name,
           option = "\0";
           options->opt_tsplibfile = 1;
           break;
+         case 'j':
+          if (option [1] != '\0')
+            options->arg_lsrnd = option + 1;
+          else if (++i < argc)
+            options->arg_lsrnd = argv [i];
+          else
+            goto error_missing_arg_short;
+          option = "\0";
+          options->opt_lsrnd = 1;
+          break;
          case 'k':
           if (option [1] != '\0')
             options->arg_nnls = option + 1;
@@ -927,6 +983,9 @@ parse_options (struct options *const options, const char *const program_name,
             goto error_missing_arg_short;
           option = "\0";
           options->opt_time = 1;
+          break;
+         case 'n':
+          options->opt_noants = 1;
           break;
          case 'u':
           options->opt_as = 1;
@@ -1020,7 +1079,6 @@ int parse_commandline (int argc, char *argv [])
     }
 
 
-
     if ( options.opt_tries ) {
 	max_tries = atol(options.arg_tries);
 	fputs ("  -r  --tries ", stdout);
@@ -1052,7 +1110,6 @@ int parse_commandline (int argc, char *argv [])
     }
 
 
-
     if ( options.opt_optimum )
     {
 	optimal = atol(options.arg_optimum);
@@ -1063,7 +1120,6 @@ int parse_commandline (int argc, char *argv [])
         fprintf(stdout,"\tNote: optimal solution value is set to default %ld\n",
                 optimal);
     }
-
 
 
     if ( options.opt_tsplibfile )
@@ -1078,6 +1134,7 @@ int parse_commandline (int argc, char *argv [])
 	    printf ("with argument \"%s\"\n", name_buf );
     }
 
+
     if (options.opt_as + options.opt_eas + options.opt_ras + options.opt_mmas
         + options.opt_bwas + options.opt_acs > 1) {
         fprintf (stderr, "error: more than one ACO algorithm enabled in the command line");
@@ -1086,6 +1143,7 @@ int parse_commandline (int argc, char *argv [])
                + options.opt_bwas + options.opt_acs == 1)  {
         as_flag = eas_flag = ras_flag = mmas_flag = bwas_flag = acs_flag = FALSE;
     }
+
 
     if (options.opt_as || as_flag) {
         as_flag = TRUE;
@@ -1117,10 +1175,16 @@ int parse_commandline (int argc, char *argv [])
         fprintf(stdout,"bwas_flag is set to 1, run Best-Worst Ant System\n");
     }
 
+
     if ( options.opt_acs || acs_flag ) {
         acs_flag = TRUE;
         set_default_acs_parameters();
         fprintf(stdout,"acs_flag is set to 1, run Ant Colony System\n");
+    }
+	if ( options.opt_noants ) {
+        as_flag = FALSE; eas_flag = FALSE; ras_flag = FALSE;
+        mmas_flag = FALSE; bwas_flag = FALSE; acs_flag = FALSE;
+        fprintf(stderr,"acs_flag, bwas_flag, mmas_flag, ras_flag, eas_flag, and as_flag all set to 0, do not run any Ant Systems\n");
     }
 
     if ( options.opt_localsearch ) {
@@ -1177,7 +1241,6 @@ int parse_commandline (int argc, char *argv [])
     }
 
 
-
     if ( options.opt_alpha ) {
 	alpha = atof(options.arg_alpha);
 	fputs ("  -a  --alpha ", stdout);
@@ -1187,7 +1250,6 @@ int parse_commandline (int argc, char *argv [])
     } else {
         fprintf(stdout,"\tNote: alpha is set to default %g\n", alpha);
     }
-
 
 
     if ( options.opt_beta ) {
@@ -1212,7 +1274,6 @@ int parse_commandline (int argc, char *argv [])
     }
 
 
-
     if ( options.opt_q0 ) {
 	q_0 = atof(options.arg_q0);
 	fputs ("  -q  --q0 ", stdout);
@@ -1224,10 +1285,9 @@ int parse_commandline (int argc, char *argv [])
     }
 
 
-
     if ( options.opt_elitistants ) {
 	elitist_ants = atol(options.arg_elitistants);
-	fputs ("  -m  --ants ", stdout);
+	fputs ("  -c, --elitistants ", stdout);
 	if (options.arg_elitistants != NULL)
 	    printf ("with argument \"%ld\"\n", elitist_ants);
         check_out_of_range( elitist_ants, 0, LONG_MAX, "elitistants");
@@ -1240,10 +1300,9 @@ int parse_commandline (int argc, char *argv [])
     }
 
 
-
     if ( options.opt_rasranks ) {
 	ras_ranks = atol(options.arg_rasranks);
-	fputs ("  -m  --ants ", stdout);
+	fputs ("  -f, --rasranks ", stdout);
 	if (options.arg_rasranks != NULL)
 	    printf ("with argument \"%ld\"\n", ras_ranks);
         check_out_of_range( ras_ranks, 0, LONG_MAX, "rasranks");
@@ -1273,6 +1332,20 @@ int parse_commandline (int argc, char *argv [])
         fprintf(stdout,"\tNote: dlb flag is set to default %d (%s don't look bits)\n", 
                 dlb_flag ? 1 : 0, dlb_flag ? "use" : "not use");
     }
+    
+    
+    if ( options.opt_lsrnd ) {
+	lsrnd_flag = atol(options.arg_lsrnd);
+	fputs ("  -j  --lsrnd ", stdout);
+	if (options.arg_lsrnd != NULL)
+	    printf ("with argument \"%ld\"\n", lsrnd_flag);
+	check_out_of_range( lsrnd_flag, 0, 1, "lsrnd_flag");
+    } else {
+	lsrnd_flag = TRUE;
+	fprintf(stdout,"\tNote: lsrnd flag is set to default %d (%s random permutations)\n", 
+                lsrnd_flag ? 1 : 0, lsrnd_flag ? "use" : "not use");;
+    }
+
 
     puts ("Non-option arguments:");
 
