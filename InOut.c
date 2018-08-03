@@ -10,9 +10,10 @@
 ##########    ACO algorithms for the TSP    ##########
 ######################################################
 
-      Version: 1.0
+      Version: 1.03-ls
       File:    InOut.c
       Author:  Thomas Stuetzle
+                Local search only option added by Jussi Rasku
       Purpose: mainly input / output / statistic routines
       Check:   README and gpl.txt
       Copyright (C) 2002  Thomas Stuetzle
@@ -107,19 +108,19 @@ int  opt;
 long int quiet_flag;           /* --quiet was given in the command-line.  */
 
 
-struct point * read_etsp(const char *tsp_file_name) 
+void read_etsp(const char *tsp_file_name) 
 /*    
       FUNCTION: parse and read instance file
       INPUT:    instance name
-      OUTPUT:   list of coordinates for all nodes
-      COMMENTS: Instance files have to be in TSPLIB format, otherwise procedure fails
+      OUTPUT:   none
+      COMMENTS: The file is read to the global instance struct.
+      Instance files have to be in TSPLIB format, otherwise procedure fails
 */
 {
     FILE         *tsp_file;
     char         buf[LINE_BUF_LEN];
-    long int     i, j;
-    struct point *nodeptr;
-
+    long int     i, j, k;
+    
     tsp_file = fopen(tsp_file_name, "r");
     if ( tsp_file == NULL ) {
 	fprintf(stderr,"No instance file specified, abort\n");
@@ -129,7 +130,8 @@ struct point * read_etsp(const char *tsp_file_name)
     printf("\nreading tsp-file %s ... \n\n", tsp_file_name);
 
     fscanf(tsp_file,"%s", buf);
-    while ( strcmp("NODE_COORD_SECTION", buf) != 0 ) {
+    while ( strcmp("NODE_COORD_SECTION", buf) != 0 &&
+	    strcmp("EDGE_WEIGHT_SECTION", buf) != 0) {
 	if ( strcmp("NAME", buf) == 0 ) {
 	    fscanf(tsp_file, "%s", buf);
 	    TRACE ( printf("%s ", buf); )
@@ -219,6 +221,9 @@ struct point * read_etsp(const char *tsp_file_name)
 	    else if ( strcmp("ATT", buf) == 0 ) {
 		distance = att_distance;
 	    }
+	    else if ( strcmp("EXPLICIT", buf) == 0 ) {
+	        /* do nothing, will read in the EDGE_WEIGHT_SECTION below */
+	    }
 	    else
 		fprintf(stderr,"EDGE_WEIGHT_TYPE %s not implemented\n",buf);
 	    strcpy(instance.edge_weight_type, buf);
@@ -244,11 +249,34 @@ struct point * read_etsp(const char *tsp_file_name)
 	    else if ( strcmp("ATT", buf) == 0 ) {
 		distance = att_distance;
 	    }
-	    else {
+        else if ( strcmp("EXPLICIT", buf) == 0 ) {
+	       /* do nothing, will read in the EDGE_WEIGHT_SECTION below */
+	   }
+	   else {
 		fprintf(stderr,"EDGE_WEIGHT_TYPE %s not implemented\n",buf);
 		exit(1);
 	    }
 	    strcpy(instance.edge_weight_type, buf);
+	    buf[0]=0;
+	}
+    else if ( strcmp("EDGE_WEIGHT_FORMAT", buf) == 0 ) {
+	    fscanf(tsp_file, "%s", buf);
+	    TRACE ( printf("%s ", buf); )
+	    fscanf(tsp_file, "%s", buf);
+	    TRACE ( printf("%s\n", buf); )
+	    if( strcmp("UPPER_ROW", buf)!=0 && strcmp("LOWER_COL", buf)!=0 ) {
+		fprintf(stderr,"\n only UPPER_ROW and LOWER_COLEDGE_WEIGHT_FORMAT are supported !!\n");
+		exit(1);
+	    }
+	    buf[0]=0;
+	}
+	else if ( strcmp("EDGE_WEIGHT_FORMAT:", buf) == 0 ) {
+	    fscanf(tsp_file, "%s", buf);
+	    TRACE ( printf("%s\n", buf); )
+	    if( strcmp("UPPER_ROW", buf)!=0 && strcmp("LOWER_COL", buf)!=0 ) {
+		fprintf(stderr,"\n only UPPER_ROW and LOWER_COL EDGE_WEIGHT_FORMAT are supported !!\n");
+		exit(1);
+	    }
 	    buf[0]=0;
 	}
 	buf[0]=0;
@@ -256,24 +284,51 @@ struct point * read_etsp(const char *tsp_file_name)
     }
 
 
-    if( strcmp("NODE_COORD_SECTION", buf) == 0 ){
+    if( strcmp("NODE_COORD_SECTION", buf) == 0 ) {
 	TRACE ( printf("found section contaning the node coordinates\n"); )
+	if( (instance.nodeptr = malloc(sizeof(struct point) * n)) == NULL ) {
+	    fprintf(stderr, "Out of memory, exit.");
+	    exit(EXIT_FAILURE);
+	}
+	else {
+	    for ( i = 0 ; i < n ; i++ ) {
+		fscanf(tsp_file,"%ld %lf %lf", &j, &(instance.nodeptr)[i].x,
+		                                   &(instance.nodeptr)[i].y );
 	    }
-    else{
+	}
+	
+	printf("calculating distance matrix ..\n\n");
+	instance.distance = compute_distances();
+	printf(" .. done\n");
+    }
+    else if ( strcmp("EDGE_WEIGHT_SECTION", buf) == 0 ) {
+	TRACE ( printf("found section containing distance matrix weights\n"); )
+	if( (instance.distance = malloc(sizeof(long int) * n * n +
+			sizeof(long int *) * n	 )) == NULL){
+	    fprintf(stderr,"Out of memory, exit.");
+	    exit(EXIT_FAILURE);
+	}
+	memset(instance.distance, 0, sizeof(long int) * n * n +
+				      sizeof(long int *) * n);
+	for ( i = 0 ; i < n ; i++ ) {
+	    instance.distance[i] = (long int *)(instance.distance+n)+i*n;
+	}
+	for ( k = 0 ; k < (n*n-n)/2 ; k++ ) {
+	    i = n-2-floor(sqrt(-8*k+4*n*(n-1)-7)/2.0-0.5);
+	    j = k+i+1-n*(n-1)/2+(n-i)*((n-i)-1)/2;
+	    fscanf(tsp_file, "%ld",  &(instance.distance[i][j]));
+	    /*symmetric*/
+	    instance.distance[j][i] = instance.distance[i][j];
+	}
+    }
+    else {
 	fprintf(stderr,"\n\nSome error ocurred finding start of coordinates from tsp file !!\n");
 	exit(1);
     }
 
-    if( (nodeptr = malloc(sizeof(struct point) * n)) == NULL )
-	exit(EXIT_FAILURE);
-    else {
-	for ( i = 0 ; i < n ; i++ ) {
-	    fscanf(tsp_file,"%ld %lf %lf", &j, &nodeptr[i].x, &nodeptr[i].y );
-	}
-    }
     TRACE ( printf("number of cities is %ld\n",n); )
     TRACE ( printf("\n... done\n"); )
-	return (nodeptr);
+	return;
 }
 
 
@@ -312,7 +367,9 @@ fprintf_parameters (FILE *stream)
     fprintf(stream,"ras_ranks\t\t %ld\n", ras_ranks);
     fprintf(stream,"ls_flag\t\t\t %ld\n", ls_flag);
     fprintf(stream,"nn_ls\t\t\t %ld\n", nn_ls);
-    fprintf(stream,"dlb_flag\t\t %ld\n", dlb_flag);
+    fprintf(stream,"dlb_flag\t\t %ld\n",
+ dlb_flag);
+    fprintf(stream,"lsrnd_flag\t\t %ld\n", lsrnd_flag);
     fprintf(stream,"as_flag\t\t\t %ld\n", as_flag);
     fprintf(stream,"eas_flag\t\t %ld\n", eas_flag);
     fprintf(stream,"ras_flag\t\t %ld\n", ras_flag);
@@ -454,6 +511,7 @@ void set_default_parameters(void)
 {
     ls_flag        = 3;     /* per default run 3-opt*/
     dlb_flag       = TRUE;  /* apply don't look bits in local search */
+    lsrnd_flag     = TRUE;  /* permute route randomly before local search */
     nn_ls          = 20;    /* use fixed radius search in the 20 nearest neighbours */
     n_ants         = 25;    /* number of ants */
     nn_ants        = 20;    /* number of nearest neighbours in tour construction */
@@ -684,7 +742,7 @@ void init_program( long int argc, char *argv[] )
 */
 {
 
-  char temp_buffer[LINE_BUF_LEN];
+  char temp_buffer[LINE_BUF_LEN+6];
 
   printf(PROG_ID_STR);
   set_default_parameters();
@@ -699,7 +757,7 @@ void init_program( long int argc, char *argv[] )
   time_total_run = calloc(max_tries, sizeof(double));
   
   TRACE ( printf("read problem data  ..\n\n"); )
-  instance.nodeptr = read_etsp(name_buf);
+  read_etsp(name_buf);
   TRACE ( printf("\n .. done\n\n"); )
 
   if (n_ants < 0) n_ants = n;
@@ -731,9 +789,6 @@ void init_program( long int argc, char *argv[] )
       stat_report = NULL;
   }
    
-  printf("calculating distance matrix ..\n\n");
-  instance.distance = compute_distances();
-  printf(" .. done\n");
   write_params();
   if (comp_report)
       fprintf(comp_report,"begin problem %s\n",name_buf);

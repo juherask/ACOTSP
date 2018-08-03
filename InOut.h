@@ -10,7 +10,7 @@
 ##########    ACO algorithms for the TSP    ##########
 ######################################################
 
-      Version: 1.0
+      Version: 1.03
       File:    InOut.h
       Author:  Thomas Stuetzle
       Purpose: mainly input / output / statistic routines
@@ -51,12 +51,12 @@
 ***************************************************************************/
 
 
-#define PROG_ID_STR      "\nACO algorithms for the TSP, v1.03\n"
+#define PROG_ID_STR      "\nACO algorithms for the TSP, v1.03-ls\n"
 #define CALL_SYNTAX_STR  "call syntax:  acotsp <param-list>\n"
 
 #define LINE_BUF_LEN     255
 
-struct point * read_etsp(const char *tsp_file_name);
+void read_etsp(const char *tsp_file_name);
 
 extern long int *best_in_try;
 extern long int *best_found_at;
