@@ -156,8 +156,8 @@ void init_try( long int ntry )
   
     /* Initialize the Pheromone trails, only if ACS is used, pheromones
        have to be initialized differently */
-    if ( !(acs_flag || mmas_flag || bwas_flag) ) {
-	trail_0 = 1. / ( (rho) * nn_tour() );
+    if ( as_flag || eas_flag || ras_flag ) {
+	trail_0 = 1. / ( (rho) * nn_tour(ant, TRUE) );
 	/* in the original papers on Ant System, Elitist Ant System, and
 	   Rank-based Ant System it is not exactly defined what the
 	   initial value of the pheromones is. Here we set it to some
@@ -166,16 +166,16 @@ void init_try( long int ntry )
 	init_pheromone_trails( trail_0 );
     } 
     if ( bwas_flag ) {
-	trail_0 = 1. / ( (double) n * (double) nn_tour()) ;
+	trail_0 = 1. / ( (double) n * (double) nn_tour(ant, TRUE)) ;
 	init_pheromone_trails( trail_0 );
     } 
     if ( mmas_flag ) {
-	trail_max = 1. / ( (rho) * nn_tour() );
+	trail_max = 1. / ( (rho) * nn_tour(ant, TRUE) );
 	trail_min = trail_max / ( 2. * n );
 	init_pheromone_trails( trail_max );   
     }
     if ( acs_flag ) {
-	trail_0 = 1. / ( (double) n * (double) nn_tour( ) ) ;
+	trail_0 = 1. / ( (double) n * (double) nn_tour(ant, TRUE) ) ;
 	init_pheromone_trails( trail_0 );
     }
   

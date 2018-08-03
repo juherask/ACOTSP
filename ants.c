@@ -10,11 +10,14 @@
 ##########    ACO algorithms for the TSP    ##########
 ######################################################
 
-      Version: 1.0
+      Version: 1.03-ls
       File:    ants.c
       Author:  Thomas Stuetzle
+               Local search only option added by Jussi Rasku
       Purpose: implementation of procedures for ants' behaviour
-      Check:   README.txt and legal.txt
+               Can also be used as a 2-opt/2.5-opt/3-opt 
+               solver for TSPs
+      Check:   README and LICENSE
       Copyright (C) 2002  Thomas Stuetzle
 */
 
@@ -782,7 +785,6 @@ void bwas_worst_ant_update( ant_struct *a1, ant_struct *a2)
 */
 {  
     long int    i, j, h, pos, pred;
-    long int    distance;
     long int    *pos2;        /* positions of cities in tour of ant a2 */ 
 
     TRACE ( printf("bwas specific: best-worst pheromone update\n"); );
@@ -792,7 +794,6 @@ void bwas_worst_ant_update( ant_struct *a1, ant_struct *a2)
 	pos2[a2->tour[i]] = i;
     }
  
-    distance = 0;
     for ( i = 0 ; i < n ; i++ ) {
 	j = a1->tour[i];
 	h = a1->tour[i+1];
@@ -900,7 +901,7 @@ void copy_from_to(ant_struct *a1, ant_struct *a2)
 
 
 
-long int nn_tour( void )
+long int nn_tour( ant_struct *a1, long int empty_mem_after_gen )
 /*    
       FUNCTION:       generate some nearest neighbor tour and compute tour length
       INPUT:          none
@@ -910,26 +911,27 @@ long int nn_tour( void )
 {
     long int phase, help;
 
-    ant_empty_memory( &ant[0] );
+    ant_empty_memory( a1 );
 
     phase = 0; /* counter of the construction steps */
-    place_ant( &ant[0], phase);
+    place_ant( a1, phase);
 
     while ( phase < n-1 ) {
 	phase++;
-	choose_closest_next( &ant[0],phase);
+	choose_closest_next( a1,phase);
     }
     phase = n;
-    ant[0].tour[n] = ant[0].tour[0];
-    if ( ls_flag ) {
-	two_opt_first( ant[0].tour );
+    a1->tour[n] = a1->tour[0];
+    if ( ls_flag>0 ) {
+	two_opt_first( a1->tour );
     }
     n_tours += 1;
-/*   copy_from_to( &ant[0], best_so_far_ant ); */
-    ant[0].tour_length = compute_tour_length( ant[0].tour );
+/*   copy_from_to( a1, best_so_far_ant ); */
+    a1->tour_length = compute_tour_length( a1->tour );
 
-    help = ant[0].tour_length;
-    ant_empty_memory( &ant[0] );
+    help = a1->tour_length;
+    if (empty_mem_after_gen)
+		ant_empty_memory( a1 );
     return help;
 }
 

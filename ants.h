@@ -152,7 +152,7 @@ void copy_from_to(ant_struct *a1, ant_struct *a2);
 
 void allocate_ants ( void );
 
-long int nn_tour( void );
+long int nn_tour( ant_struct *a1, long int empty_mem_after_gen );
 
 long int distance_between_ants( ant_struct *a1, ant_struct *a2);
 
