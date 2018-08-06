@@ -2,7 +2,7 @@
 VERSION=1.03
 
 OPTIM_FLAGS=-O
-WARN_FLAGS=-Wall -ansi -pedantic -Wno-overlength-strings
+WARN_FLAGS=-Wall -ansi -pedantic -Wno-overlength-strings -Wno-unused-result
 CFLAGS=$(WARN_FLAGS) $(OPTIM_FLAGS)
 
 # You can use this autodetection of the platform ...
